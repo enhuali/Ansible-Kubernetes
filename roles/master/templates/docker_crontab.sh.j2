@@ -1,0 +1,4 @@
+#!/bin/bash
+docker images |egrep -v 'dragon|cuda'| awk '{print $3}'|xargs docker rmi
+docker container prune -f
+find /data/logs/kubernetes/ -type f -mtime +7 -exec rm -f {} \;

@@ -1,0 +1,8 @@
+---
+- name: Deploy flanneld
+  hosts: nodes
+  become: true
+  roles:
+    - flanneld
+  tags:
+    - flanneld

@@ -1,0 +1,6 @@
+---
+- name: pre-setup
+  hosts: nodes
+  become: true
+  roles:
+    - pre-setup

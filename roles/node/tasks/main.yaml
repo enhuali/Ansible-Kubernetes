@@ -1,0 +1,108 @@
+---
+- name: Create the kubelet data directory
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0755
+  with_items:
+    - "{{ KUBERNETES_LOG_DIR }}"
+    - "{{ KUBERNETES_CONF_DIR }}"
+    - "{{ KUBERNETES_BIN_DIR }}"
+    - "{{ KUBERNETES_WORK_DIR }}"
+
+- include: cert.yaml
+
+- name: Kubelet.conf
+  template:
+    src: "kubelet.yaml.j2"
+    dest: "{{ KUBERNETES_CONF_DIR }}/kubelet.yaml"
+
+- name: Write the kubelet.kubeconfig(auth) file for kubelet
+  template:
+    src: bootstrap.kubeconfig
+    dest: "{{ KUBERNETES_CONF_DIR }}/bootstrap.kubeconfig"
+    backup: yes
+  notify: restart kubelet
+
+- name: Write the kube-proxy.kubeconfig(auth) file for kube-proxy
+  template:
+    src: kube-proxy.kubeconfig
+    dest: "{{ KUBERNETES_CONF_DIR }}/kube-proxy.kubeconfig"
+    backup: yes
+  notify: restart kube-proxy
+  
+- name: Copy the binary file to node instance.
+  copy:
+    src: "{{ role_path }}/package/{{ item }}"
+    dest: "{{ KUBERNETES_BIN_DIR }}/{{ item }}"
+    owner: root
+    group: root
+    mode: 0755
+  with_items:
+    - kubelet
+    - kube-proxy
+
+- name: Create kubernets node Configuration file
+  template:
+    src: "{{ role_path }}/templates/{{ item }}.j2"
+    dest: "{{ KUBERNETES_CONF_DIR }}/{{ item }}"
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+    - kubelet
+    - proxy
+  register: change_kubelet_config
+
+- name: Copy the systemd unit file to node
+  template:
+    src: "{{ role_path }}/templates/service/{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+    - kubelet.service
+    - kube-proxy.service
+  register: change_kubelet_system
+
+- name: Start and enable node service
+  when: change_kubelet_system|succeeded and change_kubelet_system|succeeded
+  systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  with_items:
+    - kubelet
+    - kube-proxy
+
+- name: Reload node service
+  when: change_kubelet_system|changed or change_kubelet_config|changed or openssl_cert|changed or pki_certs|changed
+  systemd:
+    name: "{{ item }}"
+    state: restarted
+    daemon_reload: true
+  with_items:
+    - kubelet
+    - kube-proxy
+
+- name: Get kubernetes node status
+  command: |-
+    {{ KUBERNETES_BIN_DIR }}/kubectl get node
+  delegate_to: "{{ groups['masters'][0] }}"
+  run_once: yes
+  register: kubernetes_cluster_node_status
+  tags: node_status
+- debug: var=kubernetes_cluster_node_status.stdout_lines
+  tags: node_status
+
+- name: Get kubernetes csr status
+  command: |-
+    {{ KUBERNETES_BIN_DIR }}/kubectl get csr
+  delegate_to: "{{ groups['masters'][0] }}"
+  run_once: yes
+  register: kubernetes_cluster_csr_status
+  tags: csr_status
+- debug: var=kubernetes_cluster_csr_status.stdout_lines
+  tags: csr_status

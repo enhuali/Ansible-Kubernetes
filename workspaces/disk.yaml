@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: foo2
+spec:
+  containers:
+  - name: foo2
+    image: nginx
+    resources:
+      requests:
+        ephemeral-storage: "2Gi"	#被调度时最小需要的磁盘大小
+      limits:
+        ephemeral-storage: "4Gi"	#容器运行时最多可以使用的磁盘大小,建议与调度时所需一致
+    volumeMounts:
+    - mountPath: /mnt
+      name: jieya
+  volumes:
+    - name: jieya
+      emptyDir:
+        sizeLimit: "1Gi"	#此挂载目录下，超过1G，pod驱逐

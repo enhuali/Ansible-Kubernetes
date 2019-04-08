@@ -1,0 +1,49 @@
+---
+- stat: path="{{ CERT_DIR_TMP }}/ca.pem"
+  register: cert_stat
+
+- name: Create kubelet bootstrapping kubeconfig
+  when: cert_stat.stat.exists
+  shell: "{{ item }}"
+  args:
+    chdir: "{{ role_path }}/../node/templates"
+  with_items:
+    - >-
+      "{{ role_path }}/../master/package/kubectl" config set-cluster kubernetes
+      --certificate-authority={{ CERT_DIR_TMP }}/ca.pem --embed-certs=true 
+      --server={{KUBELET_API_SERVER}}  --kubeconfig=bootstrap.kubeconfig
+    - >- 
+      "{{ role_path }}/../master/package/kubectl" config set-credentials kubelet-bootstrap 
+      --token={{BOOTSTRAP_TOKEN}} --kubeconfig=bootstrap.kubeconfig
+    - >- 
+      "{{ role_path }}/../master/package/kubectl" config set-context default 
+      --cluster=kubernetes --user=kubelet-bootstrap 
+      --kubeconfig=bootstrap.kubeconfig
+    - >-
+      "{{ role_path }}/../master/package/kubectl" config use-context default --kubeconfig=bootstrap.kubeconfig
+
+
+- stat: path={{ role_path }}/../node/templates/kube-proxy.kubeconfig
+  register: proxy_stat
+
+- name: Create kube-proxy bootstrapping kubeconfig
+  when: cert_stat.stat.exists
+  shell: "{{ item }}"
+  args:
+    chdir: "{{ role_path }}/../node/templates"
+  with_items:
+    - >- 
+      "{{ role_path }}/../master/package/kubectl" config set-cluster kubernetes  
+      --certificate-authority={{ CERT_DIR_TMP }}/ca.pem 
+      --embed-certs=true --server={{KUBELET_API_SERVER}}
+      --kubeconfig=kube-proxy.kubeconfig
+    - >- 
+      "{{ role_path }}/../master/package/kubectl" config set-credentials kube-proxy 
+      --client-certificate={{ CERT_DIR_TMP }}/kube-proxy.pem 
+      --client-key={{ CERT_DIR_TMP }}/kube-proxy-key.pem 
+      --embed-certs=true --kubeconfig=kube-proxy.kubeconfig
+    - >-
+      "{{ role_path }}/../master/package/kubectl" config set-context default 
+      --cluster=kubernetes --user=kube-proxy --kubeconfig=kube-proxy.kubeconfig
+    - >-
+      "{{ role_path }}/../master/package/kubectl" config use-context default --kubeconfig=kube-proxy.kubeconfig

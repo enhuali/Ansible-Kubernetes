@@ -1,0 +1,19 @@
+---
+- name: Flush-iptables
+  shell: "iptables -P INPUT ACCEPT \
+        && iptables -F && iptables -X \
+        && iptables -F -t nat && iptables -X -t nat \
+        && iptables -F -t raw && iptables -X -t raw \
+        && iptables -F -t mangle && iptables -X -t mangle"
+
+- import_tasks: debian.yaml
+  when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+
+- import_tasks: centos.yaml
+  when: ansible_distribution == "CentOS" or ansible_distribution == "RedHat"
+
+- name: Config user power
+  shell: "{{ item }}"
+  with_items:
+    - "gpasswd -a {{ansible_user}} docker"
+    - "rm -rf /var/lib/docker"

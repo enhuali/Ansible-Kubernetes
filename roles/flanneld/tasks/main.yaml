@@ -1,0 +1,101 @@
+---
+- name: Insert flannel configuration into etcd
+  command: |-
+    {{ ETCD_BIN_DIR }}/etcdctl --ca-file={{ ETCD_PEER_CA_FILE }} \
+    --cert-file={{ ETCD_PEER_CERT_FILE }} --key-file={{ ETCD_PEER_KEY_FILE }} \
+    set {{ FLANNEL_KEY}}  \
+    '{"Network":"{{ FLANNEL_NETWORK}}","SubnetLen":{{ FLANNEL_SUBNET_LEN }},"Backend":{"Type":"{{ FLANNEL_BACKEND_TYPE}}"}}' 
+  delegate_to: "{{ groups['etcd'][0] }}"
+  run_once: yes
+
+#删除了哥""
+- debug: var={{ ansible_default_ipv4.address }}
+
+- name: Create the flannel log directory
+  file:
+    path: "{{ item }}" 
+    state: directory
+    mode: 0755
+  with_items:
+    - "{{ FLANNEL_LOG_DIR }}"
+    - "{{ FLANNEL_CONF_DIR }}"
+    - "{{ FLANNEL_BIN_DIR }}"
+    - "{{ CERT_DIR  }}"
+    - "/etc/systemd/system/docker.service.d"
+
+- name: Slurp CA certificate from ansible host
+  slurp:
+    src: "{{ CERT_DIR_TMP }}/{{ item }}"
+  with_items:
+    - server-key.pem
+    - server.pem
+    - ca.pem
+  register: pki_certs
+  run_once: true
+  delegate_to: localhost
+
+- name: Write CA certificate from ansible host to disk
+  copy:
+    dest: "{{ CERT_DIR }}/{{ item.item }}"
+    content: "{{ item.content | b64decode }}"
+  register: openssl_cert
+  with_items: "{{ pki_certs.results  }}"
+
+- name: Copy binary to node instance
+  copy:
+    src: "{{ role_path }}/package/{{ item }}"
+    dest: "{{ FLANNEL_BIN_DIR }}/{{ item }}"
+    owner: root
+    group: root
+    mode: 0755
+  with_items:
+    - flanneld
+
+- name: Copy bash to node instance
+  copy:
+    src: "{{ role_path }}/files/{{ item }}"
+    dest: "{{ FLANNEL_BIN_DIR }}/{{ item }}"
+    owner: root
+    group: root
+    mode: 0755
+  with_items:
+    - mk-docker-opts.sh
+
+- name: Create a system unit file
+  template:
+    src: "{{ role_path }}/templates/{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+  with_items:
+    - flanneld.service
+    - docker.service
+  register: change_flannel_system
+
+- name: Create the flanneld configuration file
+  template:
+    src: "{{ role_path }}/templates/flanneld.conf.j2"
+    dest: "{{ FLANNEL_CONF_DIR }}/flanneld"
+  register: change_flannel_config
+
+- name: Configure environment variables for docker
+  template:
+    src: "{{ role_path }}/templates/docker.service.d/flannel.conf.j2"
+    dest: "/etc/systemd/system/docker.service.d/flannel.conf"
+
+- name: Start and enable flannel on node
+  when: change_flannel_system|succeeded and change_flannel_config|succeeded
+  systemd:
+    name: flanneld
+    enabled: true
+    state: started
+    daemon_reload: true
+  notify:
+    - restart docker
+
+- name: Reload flanneld
+  when: change_flannel_system|changed or change_flannel_config|changed or pki_certs|changed or openssl_cert|changed
+  systemd:
+    name: flanneld
+    state: restarted
+    daemon_reload: true
+  notify:
+    - restart docker

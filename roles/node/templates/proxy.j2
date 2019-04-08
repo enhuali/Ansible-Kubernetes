@@ -1,0 +1,7 @@
+###
+# kubernetes proxy config
+
+# default config should be adequate
+
+# Add your own!
+KUBE_PROXY_ARGS="--proxy-mode=userspace --logtostderr=false --v=0 --log-dir={{ KUBERNETES_LOG_DIR }} --bind-address={{ ansible_default_ipv4.address }} --kubeconfig={{ KUBERNETES_CONF_DIR }}/kube-proxy.kubeconfig --cluster-cidr={{ CLUSTER_CIDR }}"

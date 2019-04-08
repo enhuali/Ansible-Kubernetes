@@ -1,0 +1,9 @@
+---
+- name: restart harbor
+  shell: "{{ item }}"
+  args:
+    chdir: "{{ HARBOR_WORK_DIR }}"
+  with_items:
+    - docker-compose down -v
+    - ./prepare
+    - docker-compose up -d

@@ -1,0 +1,49 @@
+- name: Install depend for docker-ce on Ubuntu
+  apt:
+    name: "{{ item }}"
+    force: yes
+  with_items:
+    - "apt-transport-https"
+    - "ca-certificates"
+    - "curl"
+    - "software-properties-common"
+    - "aufs-tools"
+    - "aufs-tools-dbg"
+    - "cgroupfs-mount"
+    - "pigz"
+    - "libseccomp2=2.3.1-2.1ubuntu2~16.04.1"
+    - "libltdl7=2.4.6-0.1"
+    - "librados-dev"
+    - "git"
+
+- name: Add docker-ce apt-key on Ubuntu
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: Add docker-ce repo on Ubuntu
+  apt_repository:
+    repo: deb [arch=amd64] http://mirrors.aliyun.com/docker-ce/linux/ubuntu xenial stable
+    state: present
+    filename: "docker-ce"
+
+- name: Install Docker version 18.06.3 on Ubuntu
+  apt:
+    name: docker-ce=18.06.3~ce~3-0~ubuntu
+    force: yes
+    state: present
+    update_cache: yes
+
+- name: Copy docker systemd config on Ubuntu
+  template:
+    src: "{{ role_path }}/templates/docker.service.j2"
+    dest: /etc/systemd/system/docker.service
+    mode: 644
+
+- name: Copy daemon json config on Ubuntu
+  template:
+    src: "{{ role_path }}/templates/daemon.json.j2"
+    dest: /etc/docker/daemon.json
+    mode: 644
+  notify:
+    - restart docker

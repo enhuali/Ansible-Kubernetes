@@ -1,0 +1,7 @@
+###
+# The following values are used to configure the kubernetes controller-manager
+
+# defaults from config and apiserver should be adequate
+
+# Add your own!
+KUBE_CONTROLLER_MANAGER_ARGS="--address=127.0.0.1 --cluster-cidr={{ CLUSTER_CIDR }} --service-cluster-ip-range={{ SERVICE_CLUSTRE_IP_RANGE }} --cluster-name={{ K8S_CLUSTER }} --cluster-signing-cert-file={{ CERT_DIR }}/ca.pem --cluster-signing-key-file={{ CERT_DIR }}/ca-key.pem  --service-account-private-key-file={{ CERT_DIR }}/ca-key.pem --root-ca-file={{ CERT_DIR }}/ca.pem --leader-elect=true --horizontal-pod-autoscaler-use-rest-clients=false"

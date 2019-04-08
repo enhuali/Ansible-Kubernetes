@@ -1,0 +1,11 @@
+[etcd]
+ETCD_IP	ansible_user='SUDO_USER'
+
+[masters]
+MASTERS_IP ansible_user='SUDO_USER'
+
+[nodes]
+NODES_IP ansible_user='SUDO_USER'
+
+[harbor]
+HARBOR_IP ansible_user='SUDO_USER'

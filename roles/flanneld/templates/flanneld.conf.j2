@@ -1,0 +1,17 @@
+{% macro initial_cluster() -%}
+{% for host in groups[ETCD_PEER_GROUP] %}
+{{ ETCD_PEER_URL_SCHEME }}://{{ host }}:{{ ETCD_CLIENT_PORT }}
+{%- if not loop.last -%},{%- endif -%}
+{%- endfor -%}
+{% endmacro -%}
+# Flanneld configuration options
+
+# etcd url location.  Point this to the server where etcd runs
+FLANNEL_ETCD_ENDPOINTS="{{ initial_cluster() }}"
+
+# etcd config key.  This is the configuration key that flannel queries
+# For address range assignment
+FLANNEL_ETCD_PREFIX="{{ FLANNEL_ETCD_PREFIX }}"
+
+# Any additional options that you want to pass
+FLANNEL_OPTIONS="-etcd-cafile={{ CERT_DIR }}/ca.pem -etcd-certfile={{ CERT_DIR }}/server.pem -etcd-keyfile={{ CERT_DIR }}/server-key.pem"

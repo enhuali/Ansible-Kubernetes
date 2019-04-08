@@ -1,0 +1,18 @@
+[Unit]
+Description=Kubernetes Scheduler Plugin
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+EnvironmentFile=-{{ MASTER_CONF_DIR }}/config
+EnvironmentFile=-{{ MASTER_CONF_DIR }}/scheduler
+ExecStart={{ MASTER_BIN_DIR }}/kube-scheduler \
+                    $KUBE_LOGTOSTDERR \
+                    $KUBE_LOG_LEVEL \
+                    $KUBE_LOG_DIR \
+                    $KUBE_MASTER \
+                    $KUBE_SCHEDULER_ARGS
+Restart=on-failure
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

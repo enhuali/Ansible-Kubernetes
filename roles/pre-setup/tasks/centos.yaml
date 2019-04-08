@@ -1,0 +1,30 @@
+- name: Delete unwanted software
+  yum:
+    name:
+      - firewalld
+      - python-firewall
+      - firewalld-filesystem
+    state: absent
+
+- name: Install basic software
+  yum:
+    name:
+      - conntrack-tools
+      - psmisc
+      - nfs-utils
+      - socat
+      - bash-completion
+      - rsync
+      - ipset
+      - ipvsadm
+    state: present
+
+- name: Temporary closure selinux
+  shell: "setenforce 0"
+  failed_when: false
+
+- name: Permanently close selinux
+  lineinfile:
+    dest: /etc/selinux/config
+    regexp: "^SELINUX="
+    line: "SELINUX=disabled"

@@ -1,0 +1,6 @@
+---
+- name: Deploy harbor
+  hosts: harbor
+  become: true
+  roles:
+    - harbor

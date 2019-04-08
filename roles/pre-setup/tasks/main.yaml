@@ -1,0 +1,19 @@
+- import_tasks: debian.yaml
+  when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+
+- import_tasks: centos.yaml
+  when: ansible_distribution == "CentOS" or ansible_distribution == "RedHat"
+
+- import_tasks: common.yaml
+
+- name: Set environment variables
+  lineinfile:
+    dest: ~/.bashrc
+    state: present
+    line: 'export PATH=$PATH:/data/apps/docker/bin:/data/apps/kubernetes/bin:/data/apps/etcd/bin:/usr/local/go/bin'
+
+- name: Set an alias
+  lineinfile:
+    dest: ~/.bashrc
+    state: present
+    line: 'alias kc="kubectl -n autocnna"'

@@ -1,0 +1,7 @@
+---
+- name: Deploy ssl
+  become: true
+  hosts: localhost
+  connection: local
+  roles:
+    - ssl

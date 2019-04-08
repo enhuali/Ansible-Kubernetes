@@ -1,0 +1,41 @@
+- name: Add docker-ce repo on Centos
+  copy:
+    src: docker-ce.repo
+    dest: /etc/yum.repos.d/
+
+- shell: |
+    yum list --showduplicates 'docker-ce' | awk  '/'{{ DOCKER_VERSION }}'.*el/{a=$2}END{print a}'
+  register: docker_ce
+  run_once: true
+#  delegate_to: "{{ groups['master'][0] }}"
+  args:
+    warn: false
+
+- name: Install depend for docker-ce-{{ docker_ce.stdout }} on Centos
+  yum:
+    name: docker-ce-{{ docker_ce.stdout }}
+
+- name: Create docker systemd unit on Centos
+  template:
+    src: docker.service.j2
+    dest: /etc/systemd/system/docker.service
+  tags: upgrade_docker, download_docker
+
+- name: Create docker dir on Centos
+  file:
+    path: /etc/docker
+    state: directory
+
+- name: Copy daemon json config on Centos
+  template:
+    src: "{{ role_path }}/templates/daemon.json.j2"
+    dest: /etc/docker/daemon.json
+    mode: 644
+  notify:
+    - Restart docker on Centos
+
+- name: Enable docker on system on Centos
+  systemd:
+    name: docker
+    state: started
+    enabled: yes

@@ -1,0 +1,62 @@
+---
+- name: Create work dir
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ansible_user}}"
+    group: "{{ansible_user}}"
+    mode: 0755
+  with_items:
+    - "{{ HARBOR_BASE_DIR }}"
+
+- stat: path=/usr/local/bin/docker-compose
+  register: compose_status
+
+- name: Copy harbor-offline-package
+  copy:
+    src: "{{ role_path }}/package/{{ item }}"
+    dest: "/tmp/{{ item }}"
+    owner: "{{ansible_user}}"
+    group: "{{ansible_user}}"
+  with_items:
+    - harbor-offline-installer-v1.1.2.tgz
+
+
+- name: Copy docker-compose
+  copy:
+    src: "{{ role_path }}/package/{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    owner: "{{ansible_user}}"
+    group: "{{ansible_user}}"
+    mode: 0777 
+  with_items:
+    - docker-compose
+
+- name: Tar harbor
+  when: not compose_status.stat.exists
+  shell: "{{ item }}"
+  args:
+    chdir: "/tmp"
+  with_items:
+    - tar zxf harbor-offline-installer-v1.1.2.tgz -C "{{ HARBOR_BASE_DIR }}"
+
+- name: Edit config
+  template:
+    src: "{{ role_path }}/templates/{{ item }}.j2"
+    dest: "{{ HARBOR_WORK_DIR }}/{{ item }}"
+    owner: "{{ansible_user}}"
+    group: "{{ansible_user}}"
+  with_items:
+    - prepare
+    - harbor.cfg
+    - docker-compose.yml
+  notify: restart harbor
+
+- name: Install harbor
+  when: not compose_status.stat.exists
+  shell: "{{ item }}"
+  args:
+    chdir: "{{ HARBOR_WORK_DIR }}"
+  with_items:
+    - "./prepare"
+    - "./install.sh"

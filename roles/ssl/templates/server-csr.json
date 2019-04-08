@@ -1,0 +1,31 @@
+{
+    "CN": "kubernetes",
+    "hosts": [
+{% for ip in SSL_CONFIG.IP_LIST %}
+    "{{ ip }}",
+{% endfor %}
+{% for master in groups[MASTER_PEER_GROUP] %}
+    "{{ master }}",
+{% endfor %}
+{% for DNS in SSL_CONFIG.DNS %}
+  {% if not loop.last %}
+    "{{ DNS }}",
+  {% else %}
+    "{{ DNS }}"
+  {% endif %}
+{% endfor %}
+    ],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [
+        {
+            "C": "CN",
+            "ST": "BeiJing",
+            "L": "BeiJing",
+            "O": "k8s",
+            "OU": "System"
+        }
+    ]
+}

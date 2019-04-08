@@ -1,0 +1,143 @@
+#Clean master
+- hosts:
+  - masters
+  tasks:
+  - name: Stop and disable k8s-master service
+    service:
+      name: "{{ item }}"
+      state: stopped
+      enabled: no
+    with_items:
+    - kube-apiserver
+    - kube-controller-manager
+    - kube-scheduler
+    ignore_errors: true
+
+  - name: Semove files and dirs of k8s-master
+    file:
+      name: "{{ item }}"
+      state: absent
+    with_items:
+    - "/etc/systemd/system/kube-apiserver.service"
+    - "/etc/systemd/system/kube-controller-manager.service"
+    - "/etc/systemd/system/kube-scheduler.service"
+
+#Clean node
+- hosts:
+  - masters
+  - nodes
+  tasks:
+  - name: Stop and disable k8s-node service
+    service:
+      name: "{{ item }}"
+      state: stopped
+      enabled: no
+    with_items:
+    - kubelet
+    - kube-proxy
+    ignore_errors: true
+
+  - name: Umount overlay
+    shell: |-
+      df -h|grep over|awk '{print $6}'
+      df -h | grep '/var/lib/kubelet'|awk '{print $6}' |xargs umount
+    ignore_errors: true
+
+  - name: Remove files and dirs of k8s-node
+    file:
+      name: "{{ item }}"
+      state: absent
+    with_items:
+    - "{{ CERT_DIR }}"
+    - "{{ CERT_DIR_TMP }}"
+    - "{{ KUBERNETES_WORK_DIR }}"
+    - "{{ MASTER_CONF_DIR }}"
+    - "{{ MASTER_BIN_DIR }}"
+    - "{{ MASTER_LOG_DIR }}"
+    - "/etc/systemd/system/kubelet.service"
+    - "/etc/systemd/system/kube-proxy.service"
+
+#Clean docker and networking
+- hosts:
+  - masters
+  - nodes
+  tasks:
+  - name: Stop and disable docker and flanneld service
+    service:
+      name: "{{ item }}"
+      state: stopped
+      enabled: no
+    with_items:
+    - docker
+    - flanneld
+    ignore_errors: true
+
+  - name: Remove files and dirs
+    file:
+      name: "{{ item }}"
+      state: absent
+    with_items:
+    - "{{STORAGE_DIR}}"
+    - "{{ FLANNEL_LOG_DIR }}"
+    - "{{ FLANNEL_CONF_DIR }}"
+    - "{{ FLANNEL_BIN_DIR }}"
+    - "/var/run/docker/"
+    - "/etc/systemd/system/docker.service"
+    - "/etc/systemd/system/docker.service.requires/"
+    - "/etc/systemd/system/docker.service.d/"
+    - "/etc/bash_completion.d/"
+    - "/usr/bin/docker"
+    - "/run/flannel/"
+
+  - name: Cleanup network
+    shell: |-
+      ip link del docker0
+      ip link del flannel.1
+    ignore_errors: true
+
+  - name: Uninstall depend for docker-ce on Ubuntu-16.04
+    when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+    apt:
+      name: "{{ item }}"
+      state: absent
+      force: yes
+      purge: yes
+    with_items:
+      - "docker-ce"
+  
+  - name: Uninstall depend for docker-ce-{{ docker_ce.stdout }} on Centos-7.6
+    when: ansible_distribution == "CentOS" or ansible_distribution == "RedHat"
+    yum:
+      name: docker-ce
+      state: absent
+
+#Clean etcd
+- hosts: etcd
+  tasks:
+  - name: Stop and disable etcd service
+    service:
+      name: etcd
+      state: stopped
+      enabled: no
+    ignore_errors: true
+
+  - name: Remove files and dirs of etcd
+    file:
+      name: "{{ item }}"
+      state: absent
+    with_items:
+    - "{{ ETCD_CONF_DIR }}"
+    - "{{ ETCD_BIN_DIR }}"
+    - "{{ ETCD_DATA_DIR }}"
+    - "/etc/systemd/system/etcd.service"
+
+#Clean harbor
+- hosts: harbor
+  tasks:
+  - name: Remove files and dirs of harbor
+    file:
+      name: "{{ item }}"
+      state: absent
+    with_items:
+    - "{{ HARBOR_WORK_DIR }}"
+    - "/usr/local/bin/docker-compose"

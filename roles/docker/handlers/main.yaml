@@ -1,0 +1,11 @@
+---
+- name: Restart docker on Ubuntu
+  systemd:
+    state: restarted
+    name: docker
+    daemon_reload: yes
+    enabled: True
+
+- name: Restart docker on Centos
+  shell: systemctl daemon-reload && systemctl restart docker
+  tags: upgrade_docker

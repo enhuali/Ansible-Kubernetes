@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: busybox
+  labels:
+    app: busybox
+spec:
+#  nodeSelector:
+#    kubernetes.io/hostname: test-ubuntu
+# for i in `kubectl get pod | grep busybox|awk '{print $1}'`;do kubectl exec -it $i nslookup www.baidu.com && kubectl exec -it $i hostname ;echo '-------------------------------';done
+  template:
+    metadata:
+      labels:
+        app: busybox
+    spec:
+      containers:
+      - image: busybox
+        command:
+         - sleep
+         - "3600"
+        name: busybox

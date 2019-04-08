@@ -1,0 +1,52 @@
+- name: Update apt source
+  copy:
+    src: "sources.list"
+    dest: "/etc/apt/sources.list"
+    force: yes
+
+- name: Delete unwanted software
+  apt:
+    name:
+      - ufw
+      - lxd
+      - lxd-client
+      - lxcfs
+      - lxc-common
+    state: absent
+
+- name: Install basic software
+  apt:
+    name:
+      - nfs-common
+      - conntrack
+      - jq
+      - socat
+      - bash-completion
+      - rsync
+      - ipset
+      - ipvsadm
+    state: present
+
+- name: Set ulimits
+  lineinfile:
+    dest: /etc/profile
+    regexp: "ulimit -SHn"
+    line: "ulimit -SHn 65535"
+
+- name: Prepare journal log dir
+  file:
+    name: "{{ item }}"
+    state: directory
+  with_items:
+  - "/etc/systemd/journald.conf.d"
+  - "/var/log/journal"
+
+- name: Optimize journal log
+  template:
+    src: k8s-journald.conf.j2
+    dest: /etc/systemd/journald.conf.d/k8s-journald.conf
+
+- name: Reload journald service
+  service:
+    name: systemd-journald
+    state: restarted

@@ -1,0 +1,78 @@
+---
+# [Local]
+TLS_TOKEN: e25555ddf761636af1e8cc8692d7f064
+KUBELET_API_SERVER: https://172.17.127.65:6443
+CERT_DIR_TMP: /opt/k8s/ssl
+
+# [Main]
+# Docker
+DOCKER_VERSION: 18.06
+REG_MIRROR_1: https://registry.docker-cn.com
+REG_MIRROR_2: https://docker.mirrors.ustc.edu.cn
+LOG_DRIVER: json-file
+LOG_LEVEL: warn
+LOG_MAX_SIZE: 10m
+LOG_MAX_FILE: 3
+STORAGE_DIR: /data/docker
+ENABLE_REMOTE_API: false
+
+# Etcd
+ETCD_PEER_URL_SCHEME: https
+ETCD_DATA_DIR: /data/apps/etcd/data
+ETCD_CONF_DIR: /data/apps/etcd/etc
+ETCD_BIN_DIR: /data/apps/etcd/bin
+ETCD_VERSION: v3.3.12
+ETCD_PEER_GROUP: etcd
+ETCD_PEER_PORT: 2380
+ETCD_CLIENT_PORT: 2379
+ETCD_PEER_CA_FILE: "{{ CERT_DIR }}/ca.pem"
+ETCD_PEER_CERT_FILE: "{{ CERT_DIR }}/server.pem"
+ETCD_PEER_KEY_FILE: "{{ CERT_DIR}}/server-key.pem"
+
+# Flanneld
+FLANNEL_ETCD_PREFIX: /coreos.com/network
+FLANNEL_LOG_DIR: /data/logs/flannel
+FLANNEL_CONF_DIR: /data/apps/flannel/conf
+FLANNEL_BIN_DIR: /data/apps/flannel/bin
+FLANNEL_NETWORK: "{{ CLUSTER_CIDR }}"
+FLANNEL_SUBNET_LEN: 24
+FLANNEL_BACKEND_TYPE: vxlan
+FLANNEL_KEY: /coreos.com/network/config
+
+# Master
+K8S_CLUSTER: kubernetes
+CERT_DIR: /etc/kubernetes/ssl
+MASTER_CONF_DIR: /data/apps/kubernetes/conf
+MASTER_BIN_DIR: /data/apps/kubernetes/bin
+MASTER_LOG_DIR: /data/logs/kubernetes
+MASTER_PEER_GROUP: masters
+BOOTSTRAP_TOKEN: "{{ TLS_TOKEN }}"
+SSL_CONFIG:
+  IP_LIST:
+    - 127.0.0.1
+    - 10.254.0.1
+    - 39.104.102.69
+  DNS:
+    - kubernetes
+    - kubernetes.default
+    - kubernetes.default.svc
+    - kubernetes.default.svc.cluster
+    - kubernetes.default.svc.cluster.local
+
+# Node
+KUBELET_POD_INFRA_CONTAINER: mirrorgooglecontainers/pause-amd64:3.1
+CLUSTER_DNS: 10.254.0.2
+CLUSTER_CIDR: 172.17.0.0/16
+SERVICE_CLUSTRE_IP_RANGE: 10.254.0.0/16
+KUBERNETES_CONF_DIR: /data/apps/kubernetes/conf
+KUBERNETES_BIN_DIR: /data/apps/kubernetes/bin
+KUBERNETES_LOG_DIR: /data/logs/kubernetes
+KUBERNETES_WORK_DIR: /var/lib/kubelet
+
+# Harbor
+HARBOR_IP: 172.17.127.65
+HARBOR_PORT: 5000
+HARBOR_DB_PASSWD: passwd
+HARBOR_BASE_DIR: /data
+HARBOR_WORK_DIR: "{{ HARBOR_BASE_DIR}}/harbor"
+HARBOR_ADMIN_PASSWD: passwd
