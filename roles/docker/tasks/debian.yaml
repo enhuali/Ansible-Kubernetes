@@ -46,4 +46,4 @@
     dest: /etc/docker/daemon.json
     mode: 644
   notify:
-    - restart docker
+    - Restart docker on Ubuntu

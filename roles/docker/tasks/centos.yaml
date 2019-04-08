@@ -6,7 +6,7 @@
 - shell: |
     yum list --showduplicates 'docker-ce' | awk  '/'{{ DOCKER_VERSION }}'.*el/{a=$2}END{print a}'
   register: docker_ce
-  run_once: true
+#  run_once: true
 #  delegate_to: "{{ groups['master'][0] }}"
   args:
     warn: false

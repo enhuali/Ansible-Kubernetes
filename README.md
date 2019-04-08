@@ -28,7 +28,7 @@ apt-get update
 apt-get install -y software-properties-common
 apt-add-repository ppa:ansible/ansible	#回车确认
 apt-get update
-apt-get install ansible 		#ansible版本>=2.7.9
+apt-get install -y ansible 		#ansible版本>=2.7.9
 ```
 
 
