@@ -1,0 +1,17 @@
+###
+#kubernetes kubelet (minion) config
+#
+## The address for the info server to serve on (set to 0.0.0.0 or "" for all interfaces)
+KUBELET_ADDRESS="--address={{ ansible_default_ipv4.address }}"
+#
+## The port for the info server to serve on
+KUBELET_PORT="--port=10250"
+#
+## You may leave this blank to use the actual hostname
+#KUBELET_HOSTNAME="--hostname-override="
+## pod infrastructure container
+KUBELET_POD_INFRA_CONTAINER="--pod-infra-container-image={{ kubelet_pod_infra_container }}"
+#t"
+#
+## Add your own!
+KUBELET_ARGS="--feature-gates=DevicePlugins=true --cgroups-per-qos=true --enforce-node-allocatable=pods --feature-gates=LocalStorageCapacityIsolation=true --cgroup-driver=cgroupfs --cluster-dns={{ cluster_dns }} --experimental-bootstrap-kubeconfig={{ kubernetes_conf_dir }}/bootstrap.kubeconfig --kubeconfig={{ kubernetes_conf_dir }}/kubelet.kubeconfig --require-kubeconfig --cert-dir={{ cert_dir }} --cluster-domain=cluster.local. --hairpin-mode promiscuous-bridge --serialize-image-pulls=false --allow-privileged=true --logtostderr=false --v=0 --log-dir={{ kubernetes_log_dir }} --fail-swap-on=false --system-reserved=ephemeral-storage=3Gi --system-reserved=memory=1Gi --system-reserved=cpu=100m"

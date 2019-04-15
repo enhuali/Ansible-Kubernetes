@@ -9,3 +9,6 @@ NODES_IP ansible_user='SUDO_USER'
 
 [harbor]
 HARBOR_IP ansible_user='SUDO_USER'
+
+[gpu_nodes]
+GPU_IP ansible_user='SUDO_USER'

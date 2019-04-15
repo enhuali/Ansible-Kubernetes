@@ -1,0 +1,11 @@
+{
+    "registry-mirrors": ["https://registry.docker-cn.com"],
+    "insecure-registries":["{{harbor_ip}}:{{harbor_port}}","harbor.seetatech.com:5000"],
+    "default-runtime": "nvidia",
+    "runtimes": {
+        "nvidia": {
+            "path": "/usr/bin/nvidia-container-runtime",
+            "runtimeArgs": []
+        }
+    }
+}

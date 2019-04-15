@@ -2,16 +2,19 @@
 
 `Ansible-Kubernetes` 是一款基于二进制部署Kubernetes集群、并使用Ansible进行统一配置部署的工具；自行区别OS（Centos/Ubuntu）匹配进行自动部署；
 
-| 组件      | 支持                           |
-| --------- | ------------------------------ |
-| Os        | Ubuntu 16.04+, CentOS/RedHat 7 |
-| K8s       | v1.14.0                        |
-| Etcd      | v3.3.12                        |
-| Docker-ce | 18.06.3                        |
-| Network   | flannel v0.11.0                |
-| Harbor    | v1.1.2                         |
+| 组件       | 支持                           |
+| ---------- | ------------------------------ |
+| Os         | Ubuntu 16.04+, CentOS/RedHat 7 |
+| K8s        | v1.9 ~ v1.14                   |
+| Etcd       | v3.3.10~v3.3.12                |
+| Docker-ce  | 18.06.3                        |
+| Network    | flannel v0.11.0                |
+| Harbor     | v1.1.2                         |
+| Gpu-docker | v1.9 v1.10 for Ubuntu 16.04+   |
 
-- 注：集群软件包下载 https://pan.baidu.com/s/1TropT0uQsF5h2X3gVRDPBw 提取码 5b7v
+- 注：集群软件包下载（包含v1.9.0、v1.10.13、v1.13.5、v1.14.0） https://pan.baidu.com/s/1HzHUH31MGuor2A9wgLOjtw  提取码: 4gcp
+
+  *同时可以自行进行其它版本的下载部署，仅需将目录下二进制更换即可*
 
 
 
@@ -44,9 +47,8 @@ yum install -y ansible		#ansible版本>=2.7.9
 
 ## 下载K8s集群二进制文件
 
-*下载地址*  https://pan.baidu.com/s/1TropT0uQsF5h2X3gVRDPBw 提取码 5b7v
-
-并将下载到的压缩包解压至repo当前目录
+​	*下载地址*: https://pan.baidu.com/s/1HzHUH31MGuor2A9wgLOjtw 提取码: 4gcp 
+​	并将下载到的压缩包解压至repo当前目录
 
 
 
@@ -68,6 +70,9 @@ NODES_IP ansible_user='SUDO_USER'
 
 [harbor]
 HARBOR_IP ansible_user='SUDO_USER'
+
+[gpu_nodes]
+GPU_IP ansible_user='SUDO_USER'
 ```
 
 - `SUDO_USER` 为执行用户，多节点时填写多个；
@@ -75,6 +80,7 @@ HARBOR_IP ansible_user='SUDO_USER'
 - `[masters]` 配置master节点信息，`MASTER_IP` 为k8s-master节点ip信息;
 - `[nodes]` 配置node节点信息，`NODES_IP` 为k8s-node节点ip信息;
 - `[harbor]` 配置harbor节点信息，`HARBOR_IP` 为harbor节点ip信息；
+- `[gpu_nodes]`配置gpu节点信息，`GPU_IP`为gpu节点ip信息（当前Nvidia-docker驱动最高支持到v1.10）;
 
 
 
@@ -90,6 +96,14 @@ cat all.yaml
 TLS_TOKEN: e25555ddf761636af1e8cc8692d7f064
 KUBELET_API_SERVER: https://172.17.127.65:6443
 CERT_DIR_TMP: /opt/k8s/ssl
+
+# Harbor
+HARBOR_IP: 172.17.127.65
+HARBOR_PORT: 5000
+HARBOR_DB_PASSWD: passwd
+HARBOR_BASE_DIR: /data
+HARBOR_WORK_DIR: "{{ HARBOR_BASE_DIR}}/harbor"
+HARBOR_ADMIN_PASSWD: passwd
 
 # [Main]
 # Docker
@@ -156,13 +170,8 @@ KUBERNETES_BIN_DIR: /data/apps/kubernetes/bin
 KUBERNETES_LOG_DIR: /data/logs/kubernetes
 KUBERNETES_WORK_DIR: /var/lib/kubelet
 
-# Harbor
-HARBOR_IP: 172.17.127.65
-HARBOR_PORT: 5000
-HARBOR_DB_PASSWD: passwd
-HARBOR_BASE_DIR: /data
-HARBOR_WORK_DIR: "{{ HARBOR_BASE_DIR}}/harbor"
-HARBOR_ADMIN_PASSWD: passwd
+# Nvidia-docker
+DISTRIBUTION: $(. /etc/os-release;echo $ID$VERSION_ID)
 ```
 
 `[local]` 下根据实际集群环境进行修改
@@ -170,8 +179,13 @@ HARBOR_ADMIN_PASSWD: passwd
 - `TLS_TOKEN` TLS Bootstrapping 使用的 Token，可以使用命令 head -c 16 /dev/urandom | od -An -t x | tr -d ' ' 生成；
 - `KUBELET_API_SERVER` 配置kube-apiserver的接口信息；
 - `CERT_DIR_TMP` 初始化时k8s密钥临时保存目录；
+- `HARBOR_IP` harbor部署节点ip信息；
+- `HARBOR_DB_PASSWD` harbor数据库密码；
+- `HARBOR_ADMIN_PASSWD` harbor管理员密码；
 
-`[Main]` 下的配置可以不做修改（`Harbor`除外），也可自行调整如：`MASTER_CONF_DIR` `MASTER_BIN_DIR` `MASTER_LOG_DIR`
+
+
+`[Main]` 下的配置可以不做修改，也可自行调整如：`MASTER_CONF_DIR` `MASTER_BIN_DIR` `MASTER_LOG_DIR`
 
 
 
@@ -219,6 +233,9 @@ bash deploy-node.sh
 
 #部署harbor
 bash deploy-harbor.sh
+
+#部署gpu_nodes
+bash deploy-nvidia-docker.sh
 ```
 
 
@@ -231,6 +248,8 @@ bash deploy-harbor.sh
 #一键部署k8s集群
 bash install.sh
 ```
+
+一键部署仅满足k8s集群部署，不包含gpu节点、harbor等相关部署；
 
 
 
@@ -278,6 +297,17 @@ kubectl create -f anonymous.yaml
 
 
 
+## Nvidia-docker驱动
+
+*workspaces目录下*
+
+```
+#创建Nvidia驱动被node发现资源
+kubectl create -f nvidia-device-plugin.yml
+```
+
+
+
 ## 验证DNS
 
 *workspaces*目录下
@@ -306,3 +336,5 @@ bash clean.sh
 # 沟通交流
 
 QQ：262735860
+
+Q群：610156560

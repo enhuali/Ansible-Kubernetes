@@ -4,6 +4,14 @@ TLS_TOKEN: e25555ddf761636af1e8cc8692d7f064
 KUBELET_API_SERVER: https://172.17.127.65:6443
 CERT_DIR_TMP: /opt/k8s/ssl
 
+# Harbor
+HARBOR_IP: 172.17.127.65
+HARBOR_PORT: 5000
+HARBOR_DB_PASSWD: passwd
+HARBOR_BASE_DIR: /data
+HARBOR_WORK_DIR: "{{ HARBOR_BASE_DIR}}/harbor"
+HARBOR_ADMIN_PASSWD: passwd
+
 # [Main]
 # Docker
 DOCKER_VERSION: 18.06
@@ -69,10 +77,5 @@ KUBERNETES_BIN_DIR: /data/apps/kubernetes/bin
 KUBERNETES_LOG_DIR: /data/logs/kubernetes
 KUBERNETES_WORK_DIR: /var/lib/kubelet
 
-# Harbor
-HARBOR_IP: 172.17.127.65
-HARBOR_PORT: 5000
-HARBOR_DB_PASSWD: passwd
-HARBOR_BASE_DIR: /data
-HARBOR_WORK_DIR: "{{ HARBOR_BASE_DIR}}/harbor"
-HARBOR_ADMIN_PASSWD: passwd
+# Nvidia-docker
+DISTRIBUTION: $(. /etc/os-release;echo $ID$VERSION_ID)

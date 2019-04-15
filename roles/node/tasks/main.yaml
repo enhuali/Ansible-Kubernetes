@@ -54,7 +54,7 @@
     - proxy
   register: change_kubelet_config
 
-- name: Copy the systemd unit file to node
+- name: Copy proxy systemd unit file to node
   template:
     src: "{{ role_path }}/templates/service/{{ item }}.j2"
     dest: "/etc/systemd/system/{{ item }}"
@@ -62,8 +62,40 @@
     group: root
     mode: 0644
   with_items:
-    - kubelet.service
     - kube-proxy.service
+
+- shell: |
+    {{ role_path }}/package/kubelet --version | awk -F '.' '{print $2}'
+  register: kubelet_version
+  args:
+    warn: false
+
+- shell: |
+    echo {{ kubelet_version.stdout }} > /tmp/11
+
+- name: Copy the systemd unit file to node
+  when: kubelet_version.stdout >= "10" 
+  template:
+    src: "{{ role_path }}/templates/service/{{ item }}.j2"
+    dest: "/etc/systemd/system/kubelet.service"
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+    - new_kubelet.service
+  register: change_kubelet_system
+
+
+- name: Copy the systemd unit file to node
+  when: kubelet_version.stdout < "10"
+  template:
+    src: "{{ role_path }}/templates/service/{{ item }}.j2"
+    dest: "/etc/systemd/system/kubelet.service"
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+    - old_kubelet.service
   register: change_kubelet_system
 
 - name: Start and enable node service

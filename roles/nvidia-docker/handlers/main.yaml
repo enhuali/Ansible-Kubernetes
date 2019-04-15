@@ -1,0 +1,15 @@
+---
+- name: restart nvidia-docker
+  systemd:
+    state: restarted
+    name: docker
+    daemon_reload: yes
+    enabled: True
+
+
+- name: restart kubelet
+  systemd:
+    state: restarted
+    name: kubelet
+    daemon_reload: yes
+    enabled: True

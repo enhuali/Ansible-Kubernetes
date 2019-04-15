@@ -1,0 +1,8 @@
+---
+- name: Deploy nvidia-docker2+
+  hosts: gpu_nodes
+  become: true
+  roles:
+    - nvidia-docker
+  tags:
+    - nvidia-docker
