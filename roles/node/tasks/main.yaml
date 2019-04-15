@@ -70,11 +70,8 @@
   args:
     warn: false
 
-- shell: |
-    echo {{ kubelet_version.stdout }} > /tmp/11
-
 - name: Copy the systemd unit file to node
-  when: kubelet_version.stdout >= "10" 
+  when: kubelet_version.stdout|int >= 10 
   template:
     src: "{{ role_path }}/templates/service/{{ item }}.j2"
     dest: "/etc/systemd/system/kubelet.service"
@@ -87,7 +84,7 @@
 
 
 - name: Copy the systemd unit file to node
-  when: kubelet_version.stdout < "10"
+  when: kubelet_version.stdout|int < 10
   template:
     src: "{{ role_path }}/templates/service/{{ item }}.j2"
     dest: "/etc/systemd/system/kubelet.service"

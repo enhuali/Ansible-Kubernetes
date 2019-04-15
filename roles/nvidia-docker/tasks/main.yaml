@@ -1,4 +1,6 @@
 ---
+#https://github.com/NVIDIA/nvidia-docker
+
 - name: Add nvidia-docker registory
   shell: "{{ item }}"
   with_items:

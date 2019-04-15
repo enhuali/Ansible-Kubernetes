@@ -1,6 +1,13 @@
 {
-    "registry-mirrors": ["https://registry.docker-cn.com"],
-    "insecure-registries":["{{harbor_ip}}:{{harbor_port}}","harbor.seetatech.com:5000"],
+   "registry-mirrors": ["{{ REG_MIRROR_1 }}", "{{ REG_MIRROR_2 }}"],
+   "max-concurrent-downloads": 10,
+   "log-driver": "{{ LOG_DRIVER }}",
+   "log-level": "{{ LOG_LEVEL }}",
+   "log-opts": {
+     "max-size": "{{ LOG_MAX_SIZE }}",
+     "max-file": "{{ LOG_MAX_FILE }}"
+     },
+   "insecure-registries":["{{HARBOR_IP}}:{{HARBOR_PORT}}","harbor.seetatech.com:5000"],
     "default-runtime": "nvidia",
     "runtimes": {
         "nvidia": {
@@ -8,4 +15,9 @@
             "runtimeArgs": []
         }
     }
+
+   {% if ENABLE_REMOTE_API %}
+   , "hosts": ["tcp://0.0.0.0:2376", "unix:///var/run/docker.sock"]
+   {% endif %}
+
 }
