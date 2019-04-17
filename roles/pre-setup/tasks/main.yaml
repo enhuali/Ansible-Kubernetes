@@ -8,12 +8,12 @@
 
 - name: Set environment variables
   lineinfile:
-    dest: ~/.bashrc
+    dest: /etc/profile
     state: present
     line: 'export PATH=$PATH:/data/apps/docker/bin:/data/apps/kubernetes/bin:/data/apps/etcd/bin:/usr/local/go/bin'
 
 - name: Set an alias
   lineinfile:
-    dest: ~/.bashrc
+    dest: /etc/profile
     state: present
     line: 'alias kc="kubectl -n autocnna"'

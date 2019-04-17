@@ -47,3 +47,13 @@
       --cluster=kubernetes --user=kube-proxy --kubeconfig=kube-proxy.kubeconfig
     - >-
       "{{ role_path }}/../master/package/kubectl" config use-context default --kubeconfig=kube-proxy.kubeconfig
+
+- name: Update files permissions
+  file:
+    path: "{{ item }}"
+    state: touch
+    owner: "{{ansible_user}}"
+    mode: 0755
+  with_items:
+    - "{{ role_path }}/../node/templates/kube-proxy.kubeconfig"
+    - "{{ role_path }}/../node/templates/bootstrap.kubeconfig"

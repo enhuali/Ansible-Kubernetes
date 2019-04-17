@@ -3,6 +3,7 @@
   - masters
   tasks:
   - name: Stop and disable k8s-master service
+    become: yes
     service:
       name: "{{ item }}"
       state: stopped
@@ -13,10 +14,12 @@
     - kube-scheduler
     ignore_errors: true
 
-  - name: Semove files and dirs of k8s-master
+  - name: Remove files and dirs of k8s-master
+    become: yes
     file:
       name: "{{ item }}"
       state: absent
+      force: yes
     with_items:
     - "/etc/systemd/system/kube-apiserver.service"
     - "/etc/systemd/system/kube-controller-manager.service"
@@ -28,6 +31,7 @@
   - nodes
   tasks:
   - name: Stop and disable k8s-node service
+    become: yes
     service:
       name: "{{ item }}"
       state: stopped
@@ -38,15 +42,18 @@
     ignore_errors: true
 
   - name: Umount overlay
+    become: yes
     shell: |-
       df -h|grep over|awk '{print $6}'
       df -h | grep '/var/lib/kubelet'|awk '{print $6}' |xargs umount
     ignore_errors: true
 
   - name: Remove files and dirs of k8s-node
+    become: yes
     file:
       name: "{{ item }}"
       state: absent
+      force: yes
     with_items:
     - "{{ CERT_DIR }}"
     - "{{ CERT_DIR_TMP }}"
@@ -63,6 +70,7 @@
   - nodes
   tasks:
   - name: Stop and disable docker and flanneld service
+    become: yes
     service:
       name: "{{ item }}"
       state: stopped
@@ -73,9 +81,11 @@
     ignore_errors: true
 
   - name: Remove files and dirs
+    become: yes
     file:
       name: "{{ item }}"
       state: absent
+      force: yes
     with_items:
     - "{{STORAGE_DIR}}"
     - "{{ FLANNEL_LOG_DIR }}"
@@ -90,6 +100,7 @@
     - "/run/flannel/"
 
   - name: Cleanup network
+    become: yes
     shell: |-
       ip link del docker0
       ip link del flannel.1
@@ -97,6 +108,7 @@
 
   - name: Uninstall depend for docker-ce on Ubuntu-16.04
     when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+    become: yes
     apt:
       name: "{{ item }}"
       state: absent
@@ -107,6 +119,7 @@
   
   - name: Uninstall depend for docker-ce-{{ docker_ce.stdout }} on Centos-7.6
     when: ansible_distribution == "CentOS" or ansible_distribution == "RedHat"
+    become: yes
     yum:
       name: docker-ce
       state: absent
@@ -115,6 +128,7 @@
 - hosts: etcd
   tasks:
   - name: Stop and disable etcd service
+    become: yes
     service:
       name: etcd
       state: stopped
@@ -122,9 +136,11 @@
     ignore_errors: true
 
   - name: Remove files and dirs of etcd
+    become: yes
     file:
       name: "{{ item }}"
       state: absent
+      force: yes
     with_items:
     - "{{ ETCD_CONF_DIR }}"
     - "{{ ETCD_BIN_DIR }}"
@@ -135,9 +151,11 @@
 - hosts: harbor
   tasks:
   - name: Remove files and dirs of harbor
+    become: yes
     file:
       name: "{{ item }}"
       state: absent
+      force: yes
     with_items:
     - "{{ HARBOR_WORK_DIR }}"
     - "/usr/local/bin/docker-compose"
